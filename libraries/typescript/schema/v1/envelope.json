@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/envelope.json",
+  "title": "events-ndjson envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ts",
+    "source",
+    "stream",
+    "event_type",
+    "payload",
+    "correlation_id",
+    "schema_version"
+  ],
+  "properties": {
+    "ts": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
+      "description": "UTC ISO 8601 with millisecond precision"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "stream": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "events-ndjson/v1"
+    }
+  }
+}
