@@ -58,5 +58,9 @@ See `spec/EVENTS_SPEC.md`. Envelope is frozen at v1.
 - `pacing`         game/UX pacing
 - `campaign`       outreach lifecycle
 - `agent_session`  agent invocation lifecycle
+- `runs`           recipe / job lifecycle (started, finished, skipped, cancelled)
 
-Adding a new stream is a PR adding `spec/schema/v1/streams/<name>.json`.
+Adding a new stream is a PR adding `spec/schema/v1/streams/<name>.json`
+plus mirrored copies under `libraries/python/events_ndjson/schema/v1/streams/`
+and `libraries/typescript/schema/v1/streams/`. Add a conformance case in
+`conformance/conformance.py` to lock the contract.
