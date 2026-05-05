@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/streams/runs.json",
+  "title": "runs stream v1",
+  "description": "Per-recipe / per-job run lifecycle events (started, finished). Emitted by orchestrators like operator-core whenever a recipe enters or leaves the runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recipe", "kind"],
+  "properties": {
+    "recipe": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Logical name of the recipe / job that started or finished."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["started", "finished", "skipped", "cancelled"],
+      "description": "Lifecycle stage of the run."
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "Recipe version string (only on `started`)."
+    },
+    "dry_run": {
+      "type": "boolean",
+      "description": "Whether this is a dry-run invocation (only on `started`)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "error", "timeout", "verify_failed", "budget_exceeded", "skipped", "cancelled"],
+      "description": "Terminal status (only on `finished`)."
+    },
+    "duration_sec": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Wall-clock seconds (only on `finished`)."
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total agent/API cost incurred (only on `finished`)."
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if status is non-ok (only on `finished`)."
+    }
+  }
+}
