@@ -59,6 +59,7 @@ See `spec/EVENTS_SPEC.md`. Envelope is frozen at v1.
 - `campaign`       outreach lifecycle
 - `agent_session`  agent invocation lifecycle
 - `runs`           recipe / job lifecycle (started, finished, skipped, cancelled)
+- `gate_audit`     outreach Sender Gate shadow-mode decisions (cut-over diff log)
 
 Adding a new stream is a PR adding `spec/schema/v1/streams/<name>.json`
 plus mirrored copies under `libraries/python/events_ndjson/schema/v1/streams/`

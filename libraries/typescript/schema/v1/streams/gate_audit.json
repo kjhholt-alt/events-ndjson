@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/streams/gate_audit.json",
+  "title": "gate_audit stream v1",
+  "description": "Outreach Sender Gate audit decisions emitted by adapters running in shadow mode (gate evaluated alongside legacy send, no behavior change). Drives the cut-over decision: would the gate have blocked or allowed each historical send?",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["product", "lead_hash", "gate_outcome", "legacy_outcome", "agreement"],
+  "properties": {
+    "product": {
+      "type": "string",
+      "enum": ["outreach-engine", "prospector-pro", "ai-ops-consulting"],
+      "description": "Source adapter that emitted this audit event."
+    },
+    "campaign": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "Campaign name (oe_v1, pp_v1, ao_v1, ...). Optional."
+    },
+    "lead_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{12,64}$",
+      "description": "SHA-256(email)[:N] -- never the raw email. Lets you correlate without storing PII."
+    },
+    "lead_business_name": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Business name for human-readable diff inspection. Optional."
+    },
+    "gate_outcome": {
+      "type": "string",
+      "enum": ["allow", "block", "error"],
+      "description": "What the canonical 9-step gate decided."
+    },
+    "gate_block_label": {
+      "type": ["string", "null"],
+      "maxLength": 128,
+      "description": "If gate_outcome=block, which gate step + label (e.g. 'network_scrub:business_name:all around town')."
+    },
+    "gate_step": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 9,
+      "description": "If gate_outcome=block, which of the 9 steps fired (1-9)."
+    },
+    "legacy_outcome": {
+      "type": "string",
+      "enum": ["sent", "blocked", "skipped", "error"],
+      "description": "What the legacy Resend / Gmail send path actually did."
+    },
+    "legacy_block_reason": {
+      "type": ["string", "null"],
+      "maxLength": 128,
+      "description": "If legacy blocked, why."
+    },
+    "agreement": {
+      "type": "string",
+      "enum": ["match", "would_block_new", "would_allow_new", "both_block_diff_reason"],
+      "description": "match: gate + legacy agree (block-or-allow). would_block_new: gate would have blocked something legacy let through. would_allow_new: gate would have allowed something legacy blocked. both_block_diff_reason: both blocked but for different reasons."
+    },
+    "shadow_mode": {
+      "type": "string",
+      "enum": ["audit_only", "shadow_diff", "live"],
+      "description": "audit_only: gate runs in isolation. shadow_diff: gate + legacy both run, both outcomes recorded. live: gate is the source of truth."
+    }
+  }
+}

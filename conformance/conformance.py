@@ -228,6 +228,71 @@ def _t_runs_missing_recipe(tmp: Path) -> None:
         w.close()
 
 
+@case("gate_audit-stream-roundtrip")
+def _t_gate_audit_roundtrip(tmp: Path) -> None:
+    """gate_audit (Sender Gate shadow-mode decisions) roundtrips cleanly."""
+    p = tmp / "gate_audit.ndjson"
+    with Writer(stream="gate_audit", source="conf", path=p) as w:
+        w.append("decision", {
+            "product": "outreach-engine",
+            "campaign": "oe_v1",
+            "lead_hash": "abc123def456",
+            "gate_outcome": "block",
+            "gate_block_label": "network_scrub:business_name:all around town",
+            "gate_step": 4,
+            "legacy_outcome": "sent",
+            "agreement": "would_block_new",
+            "shadow_mode": "shadow_diff",
+        })
+        w.append("decision", {
+            "product": "ai-ops-consulting",
+            "lead_hash": "deadbeef0123",
+            "gate_outcome": "allow",
+            "legacy_outcome": "sent",
+            "agreement": "match",
+            "shadow_mode": "shadow_diff",
+        })
+    events = Reader(p).read_all()
+    assert len(events) == 2
+    assert events[0]["payload"]["agreement"] == "would_block_new"
+    assert events[1]["payload"]["agreement"] == "match"
+
+
+@case("gate_audit-rejects-bad-product")
+def _t_gate_audit_bad_product(tmp: Path) -> None:
+    p = tmp / "gate_audit.ndjson"
+    w = Writer(stream="gate_audit", source="conf", path=p)
+    try:
+        try:
+            w.append("decision", {
+                "product": "some-other-product",
+                "lead_hash": "abc123def456",
+                "gate_outcome": "allow",
+                "legacy_outcome": "sent",
+                "agreement": "match",
+            })
+        except Exception:
+            return
+        raise AssertionError("expected schema error for unknown product")
+    finally:
+        w.close()
+
+
+@case("gate_audit-requires-core-fields")
+def _t_gate_audit_missing(tmp: Path) -> None:
+    p = tmp / "gate_audit.ndjson"
+    w = Writer(stream="gate_audit", source="conf", path=p)
+    try:
+        try:
+            # missing lead_hash, gate_outcome, etc.
+            w.append("decision", {"product": "outreach-engine", "agreement": "match"})
+        except Exception:
+            return
+        raise AssertionError("expected schema error for missing required fields")
+    finally:
+        w.close()
+
+
 def run_python() -> int:
     failed = 0
     for name, fn in CASES:
