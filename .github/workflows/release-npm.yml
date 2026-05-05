@@ -1,0 +1,87 @@
+name: release-npm
+
+# Publishes the events-ndjson typescript library to npm on a typescript
+# release tag (e.g. tsv0.1.0). Uses npm Trusted Publishing (OIDC) -- no
+# NPM_TOKEN secret required.
+#
+# Why a separate `tsv*.*.*` tag prefix instead of reusing `v*.*.*`:
+# the typescript and python packages may version independently. Pushing
+# `v0.1.0` should publish the python package only (handled by
+# release.yml). Pushing `tsv0.1.0` publishes the typescript package.
+# A single tag (e.g. `v1.2.3`) can fire both workflows if both prefixes
+# match -- they do not. See HANDOFF_NPM.md.
+
+on:
+  push:
+    tags:
+      - "tsv*.*.*"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or commit ref to publish (overrides current ref)"
+        required: false
+
+jobs:
+  build:
+    name: build typescript dist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - name: install
+        working-directory: libraries/typescript
+        run: npm ci
+      - name: typecheck + build
+        working-directory: libraries/typescript
+        run: npm run build
+      - name: test
+        working-directory: libraries/typescript
+        run: npm test
+      - name: pack (validate)
+        working-directory: libraries/typescript
+        run: npm pack --dry-run
+      - name: extract version
+        id: version
+        working-directory: libraries/typescript
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Built version: $v"
+      - name: upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-tarball
+          path: libraries/typescript
+          retention-days: 7
+
+  publish:
+    name: publish to npm (trusted publisher)
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/events-ndjson
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-tarball
+          path: pkg/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - name: publish
+        working-directory: pkg
+        # `--provenance` requires id-token: write and emits an attestation
+        # tying the published package to this workflow run. npm's Trusted
+        # Publisher feature requires the package to have a configured
+        # publisher on npmjs.com first -- see HANDOFF_NPM.md.
+        run: npm publish --provenance --access public
