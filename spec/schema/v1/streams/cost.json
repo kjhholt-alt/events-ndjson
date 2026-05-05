@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/streams/cost.json",
+  "title": "cost stream v1",
+  "description": "Agent cost ledger events",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agent", "cost_usd"],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "cost_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "output_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "session_id": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "exit_code": {
+      "type": "integer"
+    }
+  }
+}

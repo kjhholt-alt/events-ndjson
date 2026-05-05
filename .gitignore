@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+
+# TypeScript / Node
+node_modules/
+*.tsbuildinfo
+coverage/
+dist/
+.npm
+.eslintcache
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local stream data
+*.ndjson.local
+local-data/

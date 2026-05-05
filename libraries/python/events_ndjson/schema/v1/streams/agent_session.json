@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/streams/agent_session.json",
+  "title": "agent_session stream v1",
+  "description": "Agent invocation lifecycle events for replay/diff tooling",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "phase"],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["start", "tool_use", "tool_result", "message", "thinking", "end", "error"]
+    },
+    "agent": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "tool": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 1024
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "exit_code": {
+      "type": "integer"
+    }
+  }
+}

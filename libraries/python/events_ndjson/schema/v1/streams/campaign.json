@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/streams/campaign.json",
+  "title": "campaign stream v1",
+  "description": "Outreach campaign lifecycle events",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["campaign_id", "phase"],
+  "properties": {
+    "campaign_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["queued", "sent", "delivered", "opened", "clicked", "replied", "bounced", "suppressed", "unsubscribed", "failed"]
+    },
+    "lead_id": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "channel": {
+      "type": "string",
+      "enum": ["email", "sms", "linkedin", "phone"]
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "provider_message_id": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "error": {
+      "type": "string",
+      "maxLength": 512
+    }
+  }
+}
