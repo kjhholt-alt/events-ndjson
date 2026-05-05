@@ -181,6 +181,53 @@ def _t_unregistered(tmp: Path) -> None:
     raise AssertionError("expected stream error for unregistered stream")
 
 
+@case("runs-stream-roundtrip")
+def _t_runs_roundtrip(tmp: Path) -> None:
+    """The runs stream (recipe lifecycle) must roundtrip cleanly."""
+    p = tmp / "runs.ndjson"
+    with Writer(stream="runs", source="conf", path=p) as w:
+        w.append("started", {"recipe": "build", "kind": "started",
+                              "version": "1.0", "dry_run": False})
+        w.append("finished", {"recipe": "build", "kind": "finished",
+                               "status": "ok", "duration_sec": 12.5,
+                               "cost_usd": 0.04})
+    events = Reader(p).read_all()
+    assert len(events) == 2
+    assert events[0]["payload"]["kind"] == "started"
+    assert events[0]["payload"]["recipe"] == "build"
+    assert events[1]["payload"]["status"] == "ok"
+
+
+@case("runs-stream-rejects-bad-kind")
+def _t_runs_bad_kind(tmp: Path) -> None:
+    """The runs schema's `kind` enum is enforced by the Writer."""
+    p = tmp / "runs.ndjson"
+    w = Writer(stream="runs", source="conf", path=p)
+    try:
+        try:
+            w.append("started", {"recipe": "build", "kind": "exploded"})
+        except Exception:
+            return
+        raise AssertionError("expected schema error for invalid kind")
+    finally:
+        w.close()
+
+
+@case("runs-stream-requires-recipe")
+def _t_runs_missing_recipe(tmp: Path) -> None:
+    """Required field 'recipe' must be present."""
+    p = tmp / "runs.ndjson"
+    w = Writer(stream="runs", source="conf", path=p)
+    try:
+        try:
+            w.append("started", {"kind": "started"})
+        except Exception:
+            return
+        raise AssertionError("expected schema error for missing recipe")
+    finally:
+        w.close()
+
+
 def run_python() -> int:
     failed = 0
     for name, fn in CASES:
