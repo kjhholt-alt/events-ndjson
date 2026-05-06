@@ -69,6 +69,9 @@ Registered streams in v1:
 - `pacing` — game/UX pacing events (e.g., quiet-woods)
 - `campaign` — outreach campaign lifecycle events
 - `agent_session` — agent invocation lifecycle events
+- `runs` — per-recipe / per-job run lifecycle events
+- `gate_audit` — outreach Sender Gate shadow-mode decisions
+- `ai_ops_audit` — AI Ops consulting Tier 1 audit lifecycle events
 
 Adding a new stream is a PR that adds a schema file in `streams/` and a row
 to this list. Unregistered streams are a validation FAIL.

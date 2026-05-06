@@ -293,6 +293,100 @@ def _t_gate_audit_missing(tmp: Path) -> None:
         w.close()
 
 
+@case("ai_ops_audit-stream-roundtrip")
+def _t_ai_ops_audit_roundtrip(tmp: Path) -> None:
+    """ai_ops_audit (AI Ops Tier 1 audit lifecycle) roundtrips cleanly."""
+    p = tmp / "ai_ops_audit.ndjson"
+    with Writer(stream="ai_ops_audit", source="conf", path=p) as w:
+        w.append("generated", {
+            "audit_id": "aoa_abc123def456",
+            "tier": "tier_1",
+            "phase": "generated",
+            "client_business_name": "Halverson & Sato Law Group",
+            "industry": "law firm",
+            "price_usd": 3500,
+        })
+        w.append("rendered", {
+            "audit_id": "aoa_abc123def456",
+            "tier": "tier_1",
+            "phase": "rendered",
+            "deliverable_paths": {
+                "pdf": "/tmp/audit.pdf",
+                "xlsx": "/tmp/audit.xlsx",
+            },
+        })
+        w.append("delivered", {
+            "audit_id": "aoa_abc123def456",
+            "tier": "tier_1",
+            "phase": "delivered",
+            "send_outcome": "sent",
+            "provider_message_id": "msg_xyz",
+            "dry_run": True,
+        })
+        w.append("completed", {
+            "audit_id": "aoa_abc123def456",
+            "tier": "tier_1",
+            "phase": "completed",
+            "duration_ms": 1234,
+        })
+    events = Reader(p).read_all()
+    assert len(events) == 4
+    assert events[0]["payload"]["phase"] == "generated"
+    assert events[2]["payload"]["send_outcome"] == "sent"
+    assert events[3]["payload"]["duration_ms"] == 1234
+
+
+@case("ai_ops_audit-rejects-bad-tier")
+def _t_ai_ops_audit_bad_tier(tmp: Path) -> None:
+    p = tmp / "ai_ops_audit.ndjson"
+    w = Writer(stream="ai_ops_audit", source="conf", path=p)
+    try:
+        try:
+            w.append("generated", {
+                "audit_id": "aoa_abc123def456",
+                "tier": "platinum",
+                "phase": "generated",
+            })
+        except Exception:
+            return
+        raise AssertionError("expected schema error for invalid tier")
+    finally:
+        w.close()
+
+
+@case("ai_ops_audit-requires-audit-id")
+def _t_ai_ops_audit_missing_id(tmp: Path) -> None:
+    p = tmp / "ai_ops_audit.ndjson"
+    w = Writer(stream="ai_ops_audit", source="conf", path=p)
+    try:
+        try:
+            # missing audit_id
+            w.append("generated", {"tier": "tier_1", "phase": "generated"})
+        except Exception:
+            return
+        raise AssertionError("expected schema error for missing audit_id")
+    finally:
+        w.close()
+
+
+@case("ai_ops_audit-rejects-bad-audit-id-pattern")
+def _t_ai_ops_audit_bad_id(tmp: Path) -> None:
+    p = tmp / "ai_ops_audit.ndjson"
+    w = Writer(stream="ai_ops_audit", source="conf", path=p)
+    try:
+        try:
+            w.append("generated", {
+                "audit_id": "wrong-prefix-123",
+                "tier": "tier_1",
+                "phase": "generated",
+            })
+        except Exception:
+            return
+        raise AssertionError("expected schema error for malformed audit_id")
+    finally:
+        w.close()
+
+
 def run_python() -> int:
     failed = 0
     for name, fn in CASES:
