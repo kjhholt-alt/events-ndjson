@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://events-ndjson.dev/schema/v1/streams/ai_ops_audit.json",
+  "title": "ai_ops_audit stream v1",
+  "description": "AI Ops consulting audit lifecycle events. Emitted by ai-ops-consulting/audits/pipeline.py whenever an audit is generated, delivered, or fails. One event_type per lifecycle stage. Joining key is `audit_id` (e.g. aoa_<12hex>).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["audit_id", "tier", "phase"],
+  "properties": {
+    "audit_id": {
+      "type": "string",
+      "pattern": "^aoa_[a-f0-9]{8,32}$",
+      "description": "Stable audit identifier issued by AuditPayload at construction time."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["tier_1", "tier_2", "tier_3"],
+      "description": "Pricing tier the audit belongs to. tier_1 ($3,500 flat) is the only tier shipping today."
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["generated", "rendered", "delivered", "delivery_blocked", "delivery_error", "completed", "failed"],
+      "description": "Lifecycle stage. completed = the full pipeline (render + deliver + status update) succeeded. failed = pipeline raised before completing."
+    },
+    "client_business_name": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Plain-text business name. Useful for human-readable replay; never the recipient email."
+    },
+    "client_email_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{12,64}$",
+      "description": "SHA-256(client_email)[:N]. Lets you correlate audit -> send-event without storing PII."
+    },
+    "industry": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "price_usd": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000,
+      "description": "Engagement price in USD. tier_1 default is 3500."
+    },
+    "deliverable_paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Local filesystem paths to the rendered artifacts. URLs may be added in a future minor.",
+      "properties": {
+        "pdf": { "type": "string", "maxLength": 1024 },
+        "xlsx": { "type": "string", "maxLength": 1024 },
+        "html": { "type": "string", "maxLength": 1024 },
+        "ir_json": { "type": "string", "maxLength": 1024 }
+      }
+    },
+    "deliverable_links": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Public URLs for the deliverables included in the delivery email body. Optional.",
+      "properties": {
+        "pdf": { "type": "string", "format": "uri", "maxLength": 1024 },
+        "xlsx": { "type": "string", "format": "uri", "maxLength": 1024 }
+      }
+    },
+    "send_outcome": {
+      "type": "string",
+      "enum": ["sent", "blocked", "error", "skipped"],
+      "description": "Sender Gate outcome on the delivery email (only meaningful for phase=delivered/delivery_blocked/delivery_error)."
+    },
+    "send_block_label": {
+      "type": ["string", "null"],
+      "maxLength": 128,
+      "description": "If the gate blocked the delivery, which step + label fired."
+    },
+    "provider_message_id": {
+      "type": ["string", "null"],
+      "maxLength": 256
+    },
+    "dry_run": {
+      "type": "boolean",
+      "description": "True when delivery used a noop provider (synthetic test, shadow mode)."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Pipeline wall-clock duration. Only meaningful on phase=completed/failed."
+    },
+    "error": {
+      "type": ["string", "null"],
+      "maxLength": 512,
+      "description": "Error message if phase=failed."
+    }
+  }
+}
